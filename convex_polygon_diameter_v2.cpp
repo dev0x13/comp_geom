@@ -8,7 +8,8 @@
 
 #define OUTPUT_TO_FILE true
 
-static constexpr double doubleBound = 0.67 * 10E159;
+static constexpr double doublePrecisionLossBound = 94906265;
+static constexpr double doublePrecisionLossBound2 = (doublePrecisionLossBound + 1) * (doublePrecisionLossBound + 1);
 static constexpr auto precision = std::numeric_limits<double>::max_digits10;
 
 // Basic point struct
@@ -19,15 +20,20 @@ struct Point {
     // Calculates squared distance
     inline double dist2(const Point& p) const {
         double subX = x - p.x, subY = y - p.y;
-        assert(fabs(subX) <= doubleBound && fabs(subY) <= doubleBound && "Double overflow asserted");
+        assert(fabs(subX) <= doublePrecisionLossBound && fabs(subY) <= doublePrecisionLossBound && "Double precision loss asserted");
 
         return pow(subX, 2) + pow(subY, 2);
     }
 
     // Calculates triangle area
     static inline double area(const Point& p0, const Point& p1, const Point& p2) {
-        return fabs((p1.x - p0.x) * (p2.y - p0.y) -
-                    (p1.y - p0.y) * (p2.x - p0.x));
+        double v1 = (p1.x - p0.x) * (p2.y - p0.y),
+               v2 = (p1.y - p0.y) * (p2.x - p0.x);
+
+        assert(fabs(v1) <= doublePrecisionLossBound2 && fabs(v2) <= doublePrecisionLossBound2 &&
+               "Double precision loss asserted");
+
+        return fabs(v1 - v2);
     }
 
     friend std::ostream& operator<<(std::ostream& s, const Point& p) {
