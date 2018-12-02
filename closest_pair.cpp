@@ -5,6 +5,7 @@
 #include <limits>
 #include <cassert>
 #include <algorithm>
+#include <chrono>
 
 #define OUTPUT_TO_FILE true
 
@@ -169,7 +170,20 @@ public:
 
 int main() {
     // 1) Read data
-    auto data = readData("data1.dat");
+    //auto data = readData("data1.dat");
+
+    std::random_device rd;     // only used once to initialise (seed) engine
+    std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+    std::uniform_int_distribution<int> uni(0,1000000); // guaranteed unbiased
+
+    std::vector<Point> data;
+
+    for (int i = 0; i < 10000; ++i) {
+        Point p;
+        p.x = uni(rng);
+        p.y = uni(rng);
+        data.push_back(p);
+    }
 
     auto dataSize = data.size();
 
@@ -181,9 +195,15 @@ int main() {
 
     DataWrapper dataWrapper(data);
 
+    using clock = std::chrono::system_clock;
+    using ms = std::chrono::milliseconds;
+
+    auto before = clock::now();
     // 3) Find closest pair
     dataWrapper.findClosestPair(0, dataSize - 1);
+    auto duration = std::chrono::duration_cast<ms>(clock::now() - before);
 
+    std::cout << "It took " << duration.count()/1000.0 << "s" << std::endl;
     // 3) Retrieve the result
     auto& minPack = dataWrapper.minPack;
     minPack.dist2 = sqrt(minPack.dist2);
@@ -193,6 +213,25 @@ int main() {
     std::cout << "d=" << minPack.dist2 << std::endl;
     std::cout << "p1: " << minPack.p1 << std::endl;
     std::cout << "p2: " << minPack.p2 << std::endl;
+
+    DataWrapper dataWrapper1(data);
+
+    before = clock::now();
+    // 3) Find closest pair
+    dataWrapper1.bruteForce(0, dataSize - 1);
+    duration = std::chrono::duration_cast<ms>(clock::now() - before);
+
+    std::cout << "It took " << duration.count()/1000.0 << "s" << std::endl;
+
+    // 3) Retrieve the result
+    auto& minPack1 = dataWrapper1.minPack;
+    minPack1.dist2 = sqrt(minPack1.dist2);
+
+    // 4) Output result
+    std::cout.precision(precision);
+    std::cout << "d=" << minPack1.dist2 << std::endl;
+    std::cout << "p1: " << minPack1.p1 << std::endl;
+    std::cout << "p2: " << minPack1.p2 << std::endl;
 
     if (OUTPUT_TO_FILE) {
         writeResults("result.dat", minPack);
