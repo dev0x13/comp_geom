@@ -5,6 +5,7 @@
 #include <limits>
 #include <cassert>
 #include <algorithm>
+#include <cmath>
 
 #define OUTPUT_TO_FILE true
 
@@ -173,7 +174,7 @@ public:
 
 int main() {
     // 1) Read data
-    auto data = readData("data1.dat");
+    auto data = readData("input.dat");
 
     auto dataSize = data.size();
 
@@ -186,7 +187,7 @@ int main() {
     DataWrapper dataWrapper(data);
 
     // 3) Find closest pair
-    dataWrapper.findClosestPair(0, dataSize - 1);
+    dataWrapper.findClosestPair(0, dataSize);
 
     // 3) Retrieve the result
     auto& minPack = dataWrapper.minPack;
