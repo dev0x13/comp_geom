@@ -129,9 +129,6 @@ public:
     inline void checkClosest() {
         auto tmpClosestSize = tmpClosest.size();
 
-        // Sort by Y coordinate to decrease number of iterations by adding Y coordinate constraint
-        std::sort(tmpClosest.begin(), tmpClosest.end(), cmpYAsc);
-
         for (size_t i = 0; i < tmpClosestSize; ++i) {
             for (size_t j = i + 1;
                  j < tmpClosestSize && pow((tmpClosest[j].y - tmpClosest[i].y), 2) < minPack.dist2;
@@ -144,13 +141,17 @@ public:
     }
 
     // Recursively finds the closest pair in given set
-    void findClosestPair(const size_t startInd,
-                         const size_t endInd) {
+    std::vector<Point> findClosestPair(const size_t startInd,
+                                       const size_t endInd) {
 
-        // 1) If there are few points, just brute force them and
+        std::vector<Point> res(endInd - startInd);
+
+        // 1) If there are few points, just brute force them and sort array piece by Y coordinate
         if (endInd - startInd <= 3) {
             bruteForce(startInd, endInd);
-            return;
+            std::sort(data.begin() + startInd, data.begin() + endInd, cmpYAsc);
+            res.assign(data.begin() + startInd, data.begin() + endInd);
+            return res;
         }
 
         // 2) Find the middle (by X coordinate) point
@@ -158,25 +159,47 @@ public:
         auto& midPoint = data[mid];
 
         // 3) Recursively find the closest pair in two halves
-        findClosestPair(startInd, mid);
-        findClosestPair(mid, endInd);
+        auto part1 = findClosestPair(startInd, mid);
+        auto part2 = findClosestPair(mid, endInd);
+
+        // 4) Merge sorted arrays
+        std::merge(data.begin() + startInd,
+                   data.begin() + mid,
+                   data.begin() + mid,
+                   data.begin() + endInd,
+                   res.begin(), cmpYAsc);
 
         // 4) Check points in the band with the minimal distance width
-        for (size_t i = 0; i < dataSize; ++i) {
-            if (fabs(data[i].x - midPoint.x) < minPack.dist2) {
-                tmpClosest.push_back(data[i]);
+        for (const auto& m: res) {
+            if (pow(m.x - midPoint.x, 2) < minPack.dist2) {
+                tmpClosest.push_back(m);
             }
         }
 
         checkClosest();
+
+        return res;
     }
 };
 
 int main() {
     // 1) Read data
-    auto data = readData("input.dat");
+    //auto data = readData("input.dat");
 
-    auto dataSize = data.size();
+  //auto data = readData("data1.dat");
+  std::random_device rd;     // only used once to initialise (seed) engine
+  std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+  std::uniform_int_distribution<int> uni(0,1000000); // guaranteed unbiased
+  std::vector<Point> data;
+  for (int i = 0; i < 1000; ++i) {
+    Point p;
+    p.x = uni(rng);
+    p.y = uni(rng);
+    data.push_back(p);
+  }
+
+
+  auto dataSize = data.size();
 
     // 2) Validate data and init data wrapper
     if (dataSize < 2) {
@@ -198,6 +221,18 @@ int main() {
     std::cout << "d=" << minPack.dist2 << std::endl;
     std::cout << "p1: " << minPack.p1 << std::endl;
     std::cout << "p2: " << minPack.p2 << std::endl;
+
+  DataWrapper dataWrapper1(data);
+  // 3) Find closest pair
+  dataWrapper1.bruteForce(0, dataSize - 1);
+  // 3) Retrieve the result
+  auto& minPack1 = dataWrapper1.minPack;
+  minPack1.dist2 = sqrt(minPack1.dist2);
+  // 4) Output result
+  std::cout.precision(precision);
+  std::cout << "d=" << minPack1.dist2 << std::endl;
+  std::cout << "p1: " << minPack1.p1 << std::endl;
+  std::cout << "p2: " << minPack1.p2 << std::endl;
 
     if (OUTPUT_TO_FILE) {
         writeResults("result.dat", minPack);
