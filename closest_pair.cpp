@@ -156,20 +156,20 @@ public:
 
         // 2) Find the middle (by X coordinate) point
         size_t mid = (startInd + endInd) / 2;
-        auto& midPoint = data[mid];
+        auto midPoint = data[mid];
 
         // 3) Recursively find the closest pair in two halves
         auto part1 = findClosestPair(startInd, mid);
         auto part2 = findClosestPair(mid, endInd);
 
         // 4) Merge sorted arrays
-        std::merge(data.begin() + startInd,
-                   data.begin() + mid,
-                   data.begin() + mid,
-                   data.begin() + endInd,
+        std::merge(part1.begin(),
+                   part1.end(),
+                   part2.begin(),
+                   part2.end(),
                    res.begin(), cmpYAsc);
 
-        // 4) Check points in the band with the minimal distance width
+        // 45 Check points in the band with the minimal distance width
         for (const auto& m: res) {
             if (pow(m.x - midPoint.x, 2) < minPack.dist2) {
                 tmpClosest.push_back(m);
@@ -184,22 +184,9 @@ public:
 
 int main() {
     // 1) Read data
-    //auto data = readData("input.dat");
+    auto data = readData("input.dat");
 
-  //auto data = readData("data1.dat");
-  std::random_device rd;     // only used once to initialise (seed) engine
-  std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-  std::uniform_int_distribution<int> uni(0,1000000); // guaranteed unbiased
-  std::vector<Point> data;
-  for (int i = 0; i < 1000; ++i) {
-    Point p;
-    p.x = uni(rng);
-    p.y = uni(rng);
-    data.push_back(p);
-  }
-
-
-  auto dataSize = data.size();
+    auto dataSize = data.size();
 
     // 2) Validate data and init data wrapper
     if (dataSize < 2) {
@@ -221,18 +208,6 @@ int main() {
     std::cout << "d=" << minPack.dist2 << std::endl;
     std::cout << "p1: " << minPack.p1 << std::endl;
     std::cout << "p2: " << minPack.p2 << std::endl;
-
-  DataWrapper dataWrapper1(data);
-  // 3) Find closest pair
-  dataWrapper1.bruteForce(0, dataSize - 1);
-  // 3) Retrieve the result
-  auto& minPack1 = dataWrapper1.minPack;
-  minPack1.dist2 = sqrt(minPack1.dist2);
-  // 4) Output result
-  std::cout.precision(precision);
-  std::cout << "d=" << minPack1.dist2 << std::endl;
-  std::cout << "p1: " << minPack1.p1 << std::endl;
-  std::cout << "p2: " << minPack1.p2 << std::endl;
 
     if (OUTPUT_TO_FILE) {
         writeResults("result.dat", minPack);
